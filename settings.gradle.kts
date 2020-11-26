@@ -8,4 +8,5 @@
  */
 
 rootProject.name = "gradle-tink"
+include("core")
 include("plugin")
