@@ -20,6 +20,8 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":core"))
+
     // Align versions of all Kotlin components
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
 
@@ -36,8 +38,8 @@ dependencies {
 gradlePlugin {
     // Define the plugin
     val greeting by plugins.creating {
-        id = "rigeldev.gradle.tink.greeting"
-        implementationClass = "rigeldev.gradle.tink.RigeldevGradleTinkPlugin"
+        id = "dev.rigel.gradle.tink"
+        implementationClass = "dev.rigel.gradle.tink.RigeldevGradleTinkPlugin"
     }
 }
 
