@@ -6,6 +6,7 @@ The Gradle-Tink project has two modules:
 - Gradle plugin providing basic tasks that can be used as is.
 - Core module for embedding in other plugins.
 
-TODO replace to gradle plugin portal
-TODO document tasks
-TODO document embedding
+TODO 
+- release to gradle plugin portal / jcenter
+- document tasks
+- document embedding
