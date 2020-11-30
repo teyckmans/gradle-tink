@@ -39,6 +39,7 @@ gradlePlugin {
 }
 
 pluginBundle {
+    website = "https://github.com/teyckmans/gradle-tink/"
     vcsUrl = "https://github.com/teyckmans/gradle-tink/"
     tags = listOf("cryptography", "crypto", "security", "java", "kotlin")
 }
