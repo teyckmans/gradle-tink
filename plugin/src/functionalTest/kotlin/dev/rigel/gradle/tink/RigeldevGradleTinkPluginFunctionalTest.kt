@@ -3,12 +3,12 @@
  */
 package dev.rigel.gradle.tink
 
+import groovy.util.GroovyTestCase.assertEquals
+import org.gradle.testkit.runner.BuildResult
 import java.io.File
 import org.gradle.testkit.runner.GradleRunner
 import java.util.*
-import kotlin.test.AfterTest
-import kotlin.test.Test
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 /**
  * A simple functional test for the 'dev.rigel.gradle.tink' plugin.
@@ -17,29 +17,171 @@ class RigeldevGradleTinkPluginFunctionalTest {
 
     val projectDir = File("build/functionalTest/" + UUID.randomUUID().toString())
 
-    @Test fun `can run task`() {
-        // Setup the test build
+    @BeforeTest fun init() {
         projectDir.mkdirs()
         projectDir.resolve("settings.gradle").writeText("")
         projectDir.resolve("build.gradle").writeText("""
             plugins {
                 id('dev.rigel.gradle.tink')
             }
-        """)
+        """.trimIndent())
+    }
 
-        // Run the build
+    private fun createKeyset(): BuildResult {
         val runner = GradleRunner.create()
         runner.withPluginClasspath()
-        runner.withArguments("createKeyset","--keysetFile","keyset.json")
         runner.withProjectDir(projectDir)
-        val result = runner.build();
+        runner.withArguments("createKeyset","--keysetFile","keyset.json")
+        return runner.build()
+    }
 
-        println(result.output.lines()
-                .map { outputLine -> "[test output] $outputLine" }
-                .joinToString("\n"))
+    @Test fun `can run createKeyset task`() {
+        // Run the build
+        val result = createKeyset()
+
+        showTestOutput(result)
 
         // Verify the keyset file is generated
         assertTrue(File(projectDir, "keyset.json").exists())
+    }
+
+    @Test fun `can encrypt and decrypt a file`() {
+        projectDir.resolve("sensitive.txt").writeText("this is a private key (really)")
+
+        createKeyset()
+
+        val encryptFileRunner = GradleRunner.create()
+        encryptFileRunner.withPluginClasspath()
+        encryptFileRunner.withProjectDir(projectDir)
+        encryptFileRunner.withArguments("encryptFile",
+                "--keysetFile","keyset.json",
+                "--inputFile", "sensitive.txt",
+                "--outputFile", "sensitive_encrypted.txt")
+        val encryptResult = encryptFileRunner.build()
+
+        showTestOutput(encryptResult)
+
+        assertNotEquals(
+                File(projectDir, "sensitive.txt").readBytes(),
+                File(projectDir, "sensitive_encrypted.txt").readBytes()
+        )
+
+        val decryptFileRunner = GradleRunner.create()
+        decryptFileRunner.withPluginClasspath()
+        decryptFileRunner.withProjectDir(projectDir)
+        decryptFileRunner.withArguments("decryptFile",
+                "--keysetFile","keyset.json",
+                "--inputFile", "sensitive_encrypted.txt",
+                "--outputFile", "sensitive_decrypted.txt")
+        val decryptResult = decryptFileRunner.build()
+
+        showTestOutput(decryptResult)
+
+        assertEquals(
+                File(projectDir, "sensitive.txt").readBytes(),
+                File(projectDir, "sensitive_decrypted.txt").readBytes()
+        )
+    }
+
+    @Test fun `can encrypt and decrypt a string`() {
+        val warningText = "Using the --value parameter is NOT secure as it leads to sensitive data being captured in your command line history!"
+
+        val mySensitiveProperty = "this is a super secret password"
+
+        createKeyset()
+
+        val encryptStringRunner = GradleRunner.create()
+        encryptStringRunner.withPluginClasspath()
+        encryptStringRunner.withProjectDir(projectDir)
+        encryptStringRunner.withArguments("encryptString",
+                "--keysetFile","keyset.json",
+                "--value", mySensitiveProperty)
+        val encryptResult = encryptStringRunner.build()
+
+        showTestOutput(encryptResult)
+
+        val encryptedValue = encryptResult.output.lines()
+                .filter { it.startsWith("[encrypted] ") }
+                .map { it.substring("[encrypted] ".length)}
+                .first()
+
+        assertNotEquals(encryptedValue, mySensitiveProperty)
+        assertTrue(encryptResult.output.contains(warningText))
+
+        val decryptStringRunner = GradleRunner.create()
+        decryptStringRunner.withPluginClasspath()
+        decryptStringRunner.withProjectDir(projectDir)
+        decryptStringRunner.withArguments("decryptString",
+                "--keysetFile","keyset.json",
+                "--value", encryptedValue)
+        val decryptResult = decryptStringRunner.build()
+
+        showTestOutput(decryptResult)
+
+        val decryptedValue = decryptResult.output.lines()
+                .filter { it.startsWith("[decrypted] ") }
+                .map { it.substring("[decrypted] ".length)}
+                .first()
+
+        assertEquals(decryptedValue, mySensitiveProperty)
+        assertTrue(encryptResult.output.contains(warningText))
+    }
+
+    @Test fun `can encrypt and decrypt a property`() {
+        createKeyset()
+
+        val mySensitiveProperty = "this is a super secret password"
+        val myOtherSensitiveProperty = "top secret stuff here"
+
+        val applicationPropertiesText = """
+                mySensitiveProperty=$mySensitiveProperty
+                somethingSecond=222
+                myOtherSensitiveProperty=$myOtherSensitiveProperty
+                
+                somethingLast=999
+                
+            """.trimIndent()
+        projectDir.resolve("application.properties").writeText(applicationPropertiesText)
+
+        val encryptPropertyRunner = GradleRunner.create()
+        encryptPropertyRunner.withPluginClasspath()
+        encryptPropertyRunner.withProjectDir(projectDir)
+        encryptPropertyRunner.withArguments("encryptProperty",
+                "--keysetFile","keyset.json",
+                "--propertiesFile", "application.properties",
+                "--propertyKey", "myOtherSensitiveProperty")
+        val encryptResult = encryptPropertyRunner.build()
+
+        showTestOutput(encryptResult)
+
+        assertNotEquals(
+                File(projectDir, "application.properties").readBytes(),
+                applicationPropertiesText.toByteArray()
+        )
+
+        val decryptPropertyRunner = GradleRunner.create()
+        decryptPropertyRunner.withPluginClasspath()
+        decryptPropertyRunner.withProjectDir(projectDir)
+        decryptPropertyRunner.withArguments("decryptProperty",
+                "--keysetFile","keyset.json",
+                "--propertiesFile", "application.properties",
+                "--propertyKey", "myOtherSensitiveProperty")
+        val decryptResult = decryptPropertyRunner.build()
+
+        showTestOutput(decryptResult)
+
+
+        assertEquals(
+                File(projectDir, "application.properties").readText(),
+                applicationPropertiesText
+        )
+    }
+
+    private fun showTestOutput(result: BuildResult) {
+        println(result.output.lines()
+                .joinToString("\n") { outputLine ->
+                    "[test output] $outputLine"
+                })
     }
 
     @AfterTest fun cleanUp() {

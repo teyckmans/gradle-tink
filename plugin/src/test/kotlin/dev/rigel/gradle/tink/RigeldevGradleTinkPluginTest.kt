@@ -12,12 +12,31 @@ import kotlin.test.assertNotNull
  */
 class RigeldevGradleTinkPluginTest {
 
-    @Test fun `plugin registers createKeySet task`() {
+    @Test fun `plugin registers extension`() {
+        val project = ProjectBuilder.builder().build()
+        project.plugins.apply("dev.rigel.gradle.tink")
+
+        assertNotNull(project.extensions.getByName("tink"))
+    }
+
+    @Test fun `plugin registers tasks`() {
 
         val project = ProjectBuilder.builder().build()
         project.plugins.apply("dev.rigel.gradle.tink")
 
+        // key tasks
         assertNotNull(project.tasks.findByName("createKeyset"))
 
+        // file tasks
+        assertNotNull(project.tasks.findByName("encryptFile"))
+        assertNotNull(project.tasks.findByName("decryptFile"))
+
+        // string tasks
+        assertNotNull(project.tasks.findByName("encryptString"))
+        assertNotNull(project.tasks.findByName("decryptString"))
+
+        // property tasks
+        assertNotNull(project.tasks.findByName("encryptProperty"))
+        assertNotNull(project.tasks.findByName("decryptProperty"))
     }
 }

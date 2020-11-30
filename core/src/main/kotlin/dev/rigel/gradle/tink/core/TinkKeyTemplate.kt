@@ -4,7 +4,12 @@ import com.google.crypto.tink.KeyTemplate
 import com.google.crypto.tink.KeysetHandle
 
 /**
- * Knows what TinkConfig to register and how to retrieve a specific KeyTemplate identified by a name.
+ * Named Tink KeyTemplate.
+ * Knows:
+ * - what TinkConfig to register
+ * - how to retrieve a KeyTemplate.
+ * - how to encrypt using a KeysetHandle.
+ * - how to decrypt using a KeysetHandle.
  */
 abstract class TinkKeyTemplate(val templateName: String) {
 

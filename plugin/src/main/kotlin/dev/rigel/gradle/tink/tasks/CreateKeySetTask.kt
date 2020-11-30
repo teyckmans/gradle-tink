@@ -1,4 +1,4 @@
-package dev.rigel.gradle.tink
+package dev.rigel.gradle.tink.tasks
 
 import dev.rigel.gradle.tink.core.KeyStorageFormat
 import dev.rigel.gradle.tink.core.KeysetSupport
@@ -9,26 +9,26 @@ import org.gradle.api.tasks.options.Option
 
 open class CreateKeySetTask : GradleTinkTask() {
 
-    @Option(option = "template", description = "Template name (default: AES256_CTR_HMAC_SHA256)")
+    @Option(option = "keyTemplate", description = "Keyset template name (default: AES256_CTR_HMAC_SHA256)")
     @get:Input
     var keyTemplate = "AES256_CTR_HMAC_SHA256"
 
-    @Option(option = "keysetFile", description = "Filename to save the generation key into")
+    @Option(option = "keysetFile", description = "Filename to store the generation keyset to.")
     @get:Input
-    var keysetFile = ""
+    var keysetFilename = ""
 
-    @Option(option = "keyStorageFormat", description = "Options are json or binary")
+    @Option(option = "keyStorageFormat", description = "Options are json or binary (default: json)")
     @get:Input
     var keyStorageFormat = "json"
 
     @TaskAction
     fun createKeySet() {
-        val targetFile = this.project.file(keysetFile)
+        val keysetFile = this.project.file(keysetFilename)
 
-        val keysetHandle = KeysetSupport().createKey(
+        super.keysetSupport().createKey(
                 TinkKeysetInfo(
                         this.keyTemplate,
-                        targetFile,
+                        keysetFile,
                         KeyStorageFormat.valueOf(this.keyStorageFormat.toUpperCase())
                 )
         )
