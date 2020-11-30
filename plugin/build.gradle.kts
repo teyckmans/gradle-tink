@@ -9,14 +9,7 @@
 plugins {
     // Apply the Java Gradle plugin development plugin to add support for developing Gradle plugins
     `java-gradle-plugin`
-
-    // Apply the Kotlin JVM plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "1.3.72"
-}
-
-repositories {
-    // Use JCenter for resolving dependencies.
-    jcenter()
+    id("com.gradle.plugin-publish") version "0.11.0"
 }
 
 dependencies {
@@ -39,8 +32,15 @@ gradlePlugin {
     // Define the plugin
     val greeting by plugins.creating {
         id = "dev.rigel.gradle.tink"
+        displayName = "gradle-tink"
+        description = "Gradle plugin with tasks to perform encrypt/decrypt operations using the Google Tink library."
         implementationClass = "dev.rigel.gradle.tink.RigeldevGradleTinkPlugin"
     }
+}
+
+pluginBundle {
+    vcsUrl = "https://github.com/teyckmans/gradle-tink/"
+    tags = listOf("cryptography", "crypto", "security", "java", "kotlin")
 }
 
 // Add a source set for the functional test suite
