@@ -18,6 +18,7 @@ plugins in a security sensitive environment harder than it needs to be.
 ## How-to
 In your build.gradle.kts file apply the plugin to get started.
 
+> NOTE: The plugin is pending approval at the moment so this wont work yet.
 ```kotlin
 plugins {
     id("dev.rigel.gradle.tink") version "0.1.1" // TODO use latest version
