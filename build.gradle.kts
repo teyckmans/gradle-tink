@@ -33,10 +33,6 @@ subprojects {
         kotlinOptions.jvmTarget = "1.8"
     }
 
-    tasks.named<Test>("test") {
-        useJUnitPlatform()
-    }
-
     val sourcesJar by tasks.registering(Jar::class) {
         archiveClassifier.set("sources")
 
